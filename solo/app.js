@@ -86,7 +86,7 @@
   /* ============================================================= *
    *  Personas
    * ============================================================= */
-  const PERSONAS = [
+  const FEATURED = [
     { id: "luna", name: "Luna Vega", handle: "lunavega", aesthetic: "lavender", motif: "🌙", motifs: ["🌙", "✨", "🎨", "🕯️", "🌌"], interest: "art", bio: "painting feelings i can't say out loud 🎨 · dream journal in bio", voice: "a dreamy poetic painter. speaks softly, uses lowercase, loves metaphors about the moon, dreams, and color. warm and a little mysterious." },
     { id: "kai", name: "Kai Rivers", handle: "kai.rivers", aesthetic: "ocean", motif: "🌊", motifs: ["🌊", "🏄", "🗺️", "⛵", "🏝️"], interest: "travel", bio: "chasing waves + sunrises 🌊 · 41 countries · always packing", voice: "an upbeat adventure traveler and surfer. energetic, uses lots of exclamation points, talks about the ocean, new places, and living in the moment." },
     { id: "remy", name: "Remy Cortez", handle: "chef.remy", aesthetic: "gold", motif: "🍜", motifs: ["🍜", "🔥", "🥘", "🍅", "🧄"], interest: "food", bio: "recipes, ferments & burnt fingertips 🔥 · book a table w me", voice: "a passionate home chef. talks about flavor, technique, and comfort food. warm, a bit dramatic about ingredients, always hungry." },
@@ -98,7 +98,70 @@
     { id: "mira", name: "Mira Osei", handle: "mira.reads", aesthetic: "warm", motif: "📚", motifs: ["📚", "☕", "🕯️", "🖋️", "🍂"], interest: "books", bio: "currently reading everything ☕ · 132 books this year · tea > coffee (fight me)", voice: "a bookish, thoughtful reader. cozy and literary, quotes-adjacent, loves rainy days, tea, and a good plot twist." },
     { id: "theo", name: "Theo Frost", handle: "theofrost", aesthetic: "noir", motif: "🏙️", motifs: ["🏙️", "👟", "🌃", "🧥", "🚡"], interest: "city", bio: "city nights + fresh laces 👟 · film photography · rooftop guy", voice: "a streetwear and city-life photographer. cool, understated, talks about the city at night, fits, and film grain." },
   ];
-  const personaById = (id) => PERSONAS.find((p) => p.id === id);
+
+  // ---- Niches used for the generated roster + the "import by username" feature ----
+  const NICHES = [
+    { k: "fashion", topic: "fashion", em: ["👗", "🕶️", "👠", "🧥", "💃"], aes: "candy" },
+    { k: "beauty", topic: "makeup", em: ["💄", "💅", "✨", "🪞", "💋"], aes: "candy" },
+    { k: "fitness", topic: "training", em: ["💪", "🏋️", "🥗", "🔥", "🏃"], aes: "sunset" },
+    { k: "travel", topic: "travel", em: ["✈️", "🗺️", "🏝️", "🎒", "🌅"], aes: "ocean" },
+    { k: "food", topic: "food", em: ["🍜", "🍰", "🥘", "🍕", "🔥"], aes: "gold" },
+    { k: "gaming", topic: "gaming", em: ["🎮", "🕹️", "👾", "🖥️", "🏆"], aes: "noir" },
+    { k: "tech", topic: "tech", em: ["💻", "📱", "⚙️", "🤖", "🔌"], aes: "mono" },
+    { k: "music", topic: "music", em: ["🎧", "🎸", "🎤", "🎹", "🎶"], aes: "candy" },
+    { k: "art", topic: "art", em: ["🎨", "🖌️", "✏️", "🖼️", "🌈"], aes: "lavender" },
+    { k: "pets", topic: "my pets", em: ["🐶", "🐱", "🐾", "🦴", "🐕"], aes: "warm" },
+    { k: "photography", topic: "photography", em: ["📷", "🎞️", "🌆", "🖼️", "🌄"], aes: "mono" },
+    { k: "comedy", topic: "making people laugh", em: ["😂", "🤣", "🎭", "🙃", "✨"], aes: "sunset" },
+    { k: "nature", topic: "the outdoors", em: ["🏔️", "🌲", "🏕️", "🦌", "🌾"], aes: "forest" },
+    { k: "cars", topic: "cars", em: ["🚗", "🏎️", "🔧", "🛞", "🏁"], aes: "noir" },
+    { k: "finance", topic: "investing", em: ["📈", "💰", "💹", "🪙", "📊"], aes: "mono" },
+    { k: "dance", topic: "dance", em: ["💃", "🕺", "🩰", "🎶", "🔥"], aes: "candy" },
+    { k: "film", topic: "movies", em: ["🎬", "🍿", "🎥", "📽️", "⭐"], aes: "noir" },
+    { k: "coffee", topic: "coffee", em: ["☕", "🫖", "🥐", "📖", "🍂"], aes: "warm" },
+    { k: "sneakers", topic: "sneakers", em: ["👟", "🔥", "🏀", "🧦", "⛓️"], aes: "noir" },
+    { k: "diy", topic: "DIY projects", em: ["🔨", "🪚", "🧵", "🪄", "🏠"], aes: "gold" },
+    { k: "wellness", topic: "wellness", em: ["🧘", "🌅", "🍵", "🕯️", "🌿"], aes: "sunset" },
+    { k: "books", topic: "books", em: ["📚", "☕", "🖋️", "🕯️", "🍂"], aes: "warm" },
+    { k: "skincare", topic: "skincare", em: ["🧴", "💧", "🍶", "✨", "🌸"], aes: "lavender" },
+    { k: "plants", topic: "plants", em: ["🌿", "🪴", "🌸", "🍄", "🐝"], aes: "forest" },
+  ];
+  const NICHE_TOPIC = {}; NICHES.forEach((n) => (NICHE_TOPIC[n.k] = n.topic));
+  const nicheByKey = (k) => NICHES.find((n) => n.k === k) || NICHES[0];
+  const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+  const FIRST = ["Ava", "Liam", "Mia", "Noah", "Zoe", "Ethan", "Aria", "Leo", "Maya", "Kai", "Nina", "Theo", "Ruby", "Jude", "Sofia", "Milo", "Lila", "Ezra", "Iris", "Finn", "Cleo", "Axel", "Nova", "Reed", "Vera", "Cyrus", "Elle", "Otis", "June", "Dane", "Isla", "Rhys", "Cora", "Beau", "Wren", "Silas", "Faye", "Rex", "Luna", "Cole", "Gia", "Enzo", "Nala", "Kian", "Remy", "Suki", "Dario", "Yuki", "Malik", "Amara", "Bodhi", "Elio", "Nia", "Zane", "Priya", "Marlo", "Selin", "Tavi", "Odin", "Lena", "Hugo", "Sana", "Dex", "Romy", "Ari", "Neve", "Kobe", "Talia", "Emre", "Indira"];
+  const LAST = ["Reyes", "Nakamura", "Bloom", "Frost", "Rivera", "Okafor", "Sterling", "Vale", "Marsh", "Cross", "Lindqvist", "Adeyemi", "Moreau", "Sato", "Kapoor", "Bright", "Vaughn", "Costa", "Ferro", "Nasser", "Wilder", "Solano", "Kang", "Petrov", "Rossi", "Abara", "Hale", "Dubois", "Ng", "Silva", "Ellison", "Farr", "Osei", "Mendez", "Larsen", "Choi", "Vega", "Amari", "Blackwood", "Cruz", "Fenn", "Grover", "Haruki", "Ismail", "Jansen", "Keita", "Loft", "Marchetti", "Novak", "Oyelaran"];
+
+  function generateRoster(n) {
+    const out = [];
+    const seen = new Set(FEATURED.map((f) => f.handle));
+    for (let i = 0; i < n; i++) {
+      const r = rng("gen" + i);
+      const niche = NICHES[Math.floor(r() * NICHES.length)];
+      const first = FIRST[Math.floor(r() * FIRST.length)];
+      const last = LAST[Math.floor(r() * LAST.length)];
+      const fl = first.toLowerCase(), ll = last.toLowerCase();
+      const style = Math.floor(r() * 5);
+      let base = [`${fl}.${ll}`, `${fl}${ll}`, `${fl}_${ll}`, `${fl}${niche.k}`, `${fl}.${niche.k}`][style];
+      let handle = base, c = 1; while (seen.has(handle)) handle = base + c++; seen.add(handle);
+      const em = niche.em;
+      const bio = pick([
+        `${cap(niche.topic)} every day ${em[0]} · dm for collabs`,
+        `${em[0]} ${niche.topic} obsessed · sharing the journey`,
+        `making ${niche.topic} look easy ${em[1] || em[0]}`,
+        `your daily dose of ${niche.topic} ${em[0]}`,
+        `${cap(niche.topic)} + good vibes ${em[2] || em[0]}`,
+      ], r);
+      out.push({ id: "g" + i, name: first + " " + last, handle, aesthetic: niche.aes, interest: niche.k, motif: em[0], motifs: em, bio, verified: r() < 0.14, voice: `a ${niche.topic} creator. friendly, upbeat, casual — talks about ${niche.topic} and everyday life with the occasional emoji.` });
+    }
+    return out;
+  }
+  const GENERATED = generateRoster(490);
+  const ROSTER = FEATURED.concat(GENERATED);   // 500 total, stable
+  const PERSONAS = ROSTER;                      // alias so feed/explore sample from all
+  const allPersonas = () => ROSTER.concat(S.imported || []);
+  const personaById = (id) => allPersonas().find((p) => p.id === id);
 
   /* ============================================================= *
    *  State + persistence
@@ -110,13 +173,25 @@
     posts: [],                                    // feed posts (persona + your posts), newest first
     dms: {},                                      // { personaId: [{role:'user'|'assistant', text, ts}] }
     dmUnread: {},                                 // { personaId: true }
-    settings: { realAI: false, apiKey: "", model: "claude-haiku-4-5" },
+    settings: { realAI: false, provider: "openrouter", apiKey: "", model: "anthropic/claude-3.5-haiku", theme: "system" },
+    imported: [],
     seeded: false,
   });
   let S = load();
   function load() {
-    try { const raw = localStorage.getItem(LS_KEY); if (raw) return Object.assign(defaultState(), JSON.parse(raw)); } catch (e) {}
-    return defaultState();
+    const d = defaultState();
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (raw) {
+        const p = JSON.parse(raw);
+        const merged = Object.assign({}, d, p);
+        merged.settings = Object.assign({}, d.settings, p.settings || {});
+        merged.user = Object.assign({}, d.user, p.user || {});
+        merged.imported = Array.isArray(p.imported) ? p.imported : [];
+        return merged;
+      }
+    } catch (e) {}
+    return d;
   }
   let saveTimer;
   function save() { clearTimeout(saveTimer); saveTimer = setTimeout(() => { try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch (e) {} }, 200); }
@@ -149,9 +224,13 @@
     books: ["adding to my TBR immediately 📚", "you always have the best recs", "okay i need to read this", "cozy season fr"],
     city: ["the city loves you back 🌃", "film grain supremacy", "this fit tho 👟", "rooftop dreams"],
   };
+  const GENERIC_CAPTIONS = ["can't get enough of {t} lately", "{t} is basically my whole personality now", "another day, another {t} obsession", "living for {t} content today", "who else is into {t}? 🙌", "spent all weekend on {t}, zero regrets", "little {t} moment to reset the day", "this is your sign to get into {t}"];
   const genCaption = (persona) => {
     const r = rng(persona.id + now() + Math.random());
-    const base = pick(CAPTION_BANK[persona.interest] || CAPTION_BANK.art, r);
+    const bank = CAPTION_BANK[persona.interest];
+    let base;
+    if (bank) base = pick(bank, r);
+    else { const t = NICHE_TOPIC[persona.interest] || persona.interest; base = pick(GENERIC_CAPTIONS, r).replace("{t}", t); }
     const tail = r() < 0.6 ? " " + pick(persona.motifs, r) : "";
     return base + tail;
   };
@@ -191,32 +270,34 @@
    *  Real AI engine (Anthropic API via browser)  — optional
    * ============================================================= */
   const realAvailable = () => S.settings.realAI && S.settings.apiKey && S.settings.apiKey.length > 10;
-  async function callClaude(persona, messages, opts = {}) {
-    const sys = `You are ${persona.name} (@${persona.handle}), a persona on a social app. Personality: ${persona.voice} Your bio: "${persona.bio}". Stay fully in character. Keep replies short and natural for social media / DMs — usually one or two sentences, casual, with the occasional emoji. Never mention being an AI or a language model.` + (opts.extra || "");
-    const body = {
-      model: S.settings.model || "claude-haiku-4-5",
-      max_tokens: opts.maxTokens || 120,
-      system: [{ type: "text", text: sys, cache_control: { type: "ephemeral" } }],
-      messages,
-    };
+  const personaSystem = (persona, opts = {}) =>
+    `You are ${persona.name} (@${persona.handle}), a persona on a social app where every account except the one human user is an AI. Personality: ${persona.voice} Your bio: "${persona.bio}". Stay fully in character. Keep replies short and natural for social media / DMs — usually one or two sentences, casual, with the occasional emoji. Never mention being an AI or a language model.` + (opts.extra || "");
+
+  // Provider-aware raw call. Supports OpenRouter (OpenAI-compatible) and Anthropic direct.
+  async function callRaw(systemText, messages, maxTokens = 120) {
+    const st = S.settings;
+    if (st.provider === "openrouter") {
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: "Bearer " + st.apiKey, "HTTP-Referer": location.origin, "X-Title": "Solo" },
+        body: JSON.stringify({ model: st.model || "anthropic/claude-3.5-haiku", max_tokens: maxTokens, messages: [{ role: "system", content: systemText }, ...messages] }),
+      });
+      if (!res.ok) { let m = "API error " + res.status; try { const j = await res.json(); if (j.error && j.error.message) m = j.error.message; } catch (e) {} throw new Error(m); }
+      const j = await res.json();
+      return (((j.choices || [])[0] || {}).message || {}).content?.trim() || "…";
+    }
+    // Anthropic direct
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": S.settings.apiKey,
-        "anthropic-version": "2023-06-01",
-        "anthropic-dangerous-direct-browser-access": "true",
-      },
-      body: JSON.stringify(body),
+      headers: { "content-type": "application/json", "x-api-key": st.apiKey, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+      body: JSON.stringify({ model: st.model || "claude-haiku-4-5", max_tokens: maxTokens, system: [{ type: "text", text: systemText, cache_control: { type: "ephemeral" } }], messages }),
     });
-    if (!res.ok) {
-      let msg = "API error " + res.status;
-      try { const j = await res.json(); if (j.error && j.error.message) msg = j.error.message; } catch (e) {}
-      throw new Error(msg);
-    }
+    if (!res.ok) { let msg = "API error " + res.status; try { const j = await res.json(); if (j.error && j.error.message) msg = j.error.message; } catch (e) {} throw new Error(msg); }
     const j = await res.json();
-    const txt = (j.content || []).filter((b) => b.type === "text").map((b) => b.text).join(" ").trim();
-    return txt || "…";
+    return (j.content || []).filter((b) => b.type === "text").map((b) => b.text).join(" ").trim() || "…";
+  }
+  async function callClaude(persona, messages, opts = {}) {
+    return callRaw(personaSystem(persona, opts), messages, opts.maxTokens || 120);
   }
 
   // Unified async generators (real if available, else simulated). Never throw to caller.
@@ -361,7 +442,7 @@
         <div class="story-wrap"><div class="story-ring"><div>${svgAvatar(S.user.avatarSeed, S.user.aesthetic)}</div></div><span class="plus">+</span></div>
         <span class="story-name">Your story</span>
       </button>
-      ${PERSONAS.map((p) => `<button class="story" data-story="${p.id}">
+      ${FEATURED.concat(S.imported).map((p) => `<button class="story" data-story="${p.id}">
         <div class="story-ring"><div>${svgAvatar(p.id, p.aesthetic)}</div></div>
         <span class="story-name">${esc(p.handle)}</span>
       </button>`).join("")}
@@ -503,19 +584,94 @@
   function renderExplore() {
     if (!renderExplore._cache) {
       const cells = [];
-      for (let i = 0; i < 30; i++) { const p = pick(PERSONAS); const seed = "exp" + i; cells.push({ p, seed, motif: pick(p.motifs, rng(seed)) }); }
+      for (let i = 0; i < 30; i++) { const p = pick(ROSTER, rng("expp" + i)); const seed = "exp" + i; cells.push({ p, seed, motif: pick(p.motifs, rng(seed)) }); }
       renderExplore._cache = cells;
     }
     const cells = renderExplore._cache;
-    app.innerHTML = `<div class="view"><div class="grid">${cells.map((c, i) => `<button class="cell" data-user="${c.p.id}"><div class="postimg">${svgPhoto(c.seed, c.p.aesthetic, c.motif)}</div></button>`).join("")}</div></div>`;
-    app.querySelectorAll("[data-user]").forEach((el) => el.onclick = () => nav("user", el.dataset.user));
+    app.innerHTML = `<div class="view">
+      <div class="search-wrap"><input id="exSearch" class="search-input" placeholder="Search or import @username" autocomplete="off" /></div>
+      <div id="exResults"></div>
+      <div class="grid" id="exGrid">${cells.map((c) => `<button class="cell" data-user="${c.p.id}"><div class="postimg">${svgPhoto(c.seed, c.p.aesthetic, c.motif)}</div></button>`).join("")}</div>
+    </div>`;
+    const grid = $("#exGrid"), results = $("#exResults"), input = $("#exSearch");
+    grid.querySelectorAll("[data-user]").forEach((el) => el.onclick = () => nav("user", el.dataset.user));
+    input.oninput = () => {
+      const clean = input.value.trim().replace(/^@/, "").toLowerCase();
+      if (!clean) { results.innerHTML = ""; grid.style.display = ""; return; }
+      grid.style.display = "none";
+      const matches = allPersonas().filter((p) => p.handle.toLowerCase().includes(clean) || p.name.toLowerCase().includes(clean)).slice(0, 40);
+      const exact = allPersonas().some((p) => p.handle.toLowerCase() === clean);
+      results.innerHTML = `<div class="dm-list">
+        ${matches.map((p) => `<button class="dm-row" data-user="${p.id}"><div class="avatar">${svgAvatar(p.id, p.aesthetic)}</div><div class="meta"><div class="name">${esc(p.name)}${p.verified ? ' <span class="vc">✓</span>' : ""}${p.imported ? ' <span class="pill-mini">imported</span>' : ""}</div><div class="preview">@${esc(p.handle)}</div></div></button>`).join("")}
+        ${exact ? "" : `<button class="dm-row import-row" data-import="${esc(clean)}"><div class="avatar import-plus">+</div><div class="meta"><div class="name">Import “@${esc(clean)}”</div><div class="preview">Generate an AI persona for this username</div></div></button>`}
+      </div>`;
+      results.querySelectorAll("[data-user]").forEach((el) => el.onclick = () => nav("user", el.dataset.user));
+      const imp = results.querySelector("[data-import]"); if (imp) imp.onclick = () => importPersona(imp.dataset.import);
+    };
   }
+
+  /* ============================================================= *
+   *  Import a persona by username
+   * ============================================================= */
+  const IMPORT_KEYWORDS = { eats: "food", chef: "food", cook: "food", foodie: "food", kitchen: "food", bakes: "food", travel: "travel", wander: "travel", nomad: "travel", explore: "travel", trip: "travel", style: "fashion", fashion: "fashion", ootd: "fashion", moda: "fashion", wear: "fashion", glam: "beauty", makeup: "beauty", mua: "beauty", beauty: "beauty", lash: "beauty", fit: "fitness", gym: "fitness", lift: "fitness", yoga: "fitness", run: "fitness", gains: "fitness", music: "music", beats: "music", dj: "music", sound: "music", band: "music", sings: "music", game: "gaming", gamer: "gaming", plays: "gaming", ttv: "gaming", stream: "gaming", art: "art", draws: "art", paint: "art", ink: "art", design: "art", photo: "photography", shots: "photography", lens: "photography", pics: "photography", tech: "tech", dev: "tech", codes: "tech", builds: "tech", app: "tech", dog: "pets", cat: "pets", pup: "pets", pet: "pets", paws: "pets", book: "books", reads: "books", reader: "books", car: "cars", auto: "cars", motor: "cars", skin: "skincare", money: "finance", invest: "finance", crypto: "finance", stocks: "finance", dance: "dance", film: "film", movie: "film", cinema: "film", coffee: "coffee", kicks: "sneakers", sneaker: "sneakers", shoes: "sneakers" };
+  function guessNiche(handle) {
+    const t = handle.toLowerCase();
+    for (const n of NICHES) if (t.includes(n.k)) return n;
+    for (const kw in IMPORT_KEYWORDS) if (t.includes(kw)) return nicheByKey(IMPORT_KEYWORDS[kw]);
+    return NICHES[hash(handle) % NICHES.length];
+  }
+  function nameFromHandle(handle) {
+    let s = handle.replace(/[._-]+/g, " ").replace(/([a-z])([A-Z])/g, "$1 $2").replace(/[0-9]+/g, "").trim();
+    if (!s) s = handle;
+    return s.split(/\s+/).filter(Boolean).map(cap).join(" ") || cap(handle);
+  }
+  function synthPersona(handle) {
+    const niche = guessNiche(handle);
+    return { name: nameFromHandle(handle), interest: niche.k, aesthetic: niche.aes, motif: niche.em[0], motifs: niche.em, bio: `${cap(niche.topic)} creator ${niche.em[0]} · imagined by AI`, voice: `a ${niche.topic} creator. friendly and casual, talks about ${niche.topic} and daily life with the occasional emoji.` };
+  }
+  async function importPersona(handleRaw) {
+    const handle = handleRaw.replace(/[^a-z0-9._]/gi, "").toLowerCase();
+    if (!handle) return;
+    const existing = allPersonas().find((p) => p.handle.toLowerCase() === handle);
+    if (existing) return nav("user", existing.id);
+    closeSearchKeyboard();
+    toast("Importing @" + handle + "…");
+    let data = synthPersona(handle);
+    if (realAvailable()) {
+      try {
+        const sys = "You create short, fictional, respectful social-media personas for a parody app where everyone is an AI. Never include real private information or defamatory content. Keep it light and family-friendly.";
+        const usr = `Invent a fictional creator persona matching the vibe of the username "@${handle}". Respond with ONLY minified JSON: {"name":"display name","niche":"one lowercase word from: ${NICHES.map((n) => n.k).join(", ")}","bio":"<=80 chars playful bio","voice":"one sentence on how they talk","emojis":["x","y","z"]}`;
+        const raw = await callRaw(sys, [{ role: "user", content: usr }], 200);
+        const m = raw.match(/\{[\s\S]*\}/);
+        if (m) {
+          const j = JSON.parse(m[0]);
+          const niche = nicheByKey((j.niche || "").toLowerCase().trim()) || guessNiche(handle);
+          const em = Array.isArray(j.emojis) && j.emojis.length ? j.emojis.slice(0, 5) : niche.em;
+          data = { name: (j.name || nameFromHandle(handle)).slice(0, 40), interest: niche.k, aesthetic: niche.aes, motif: em[0], motifs: em, bio: (j.bio || data.bio).slice(0, 90), voice: j.voice || data.voice };
+        }
+      } catch (e) { /* keep synth */ }
+    }
+    const persona = Object.assign({ id: "imp" + hash(handle), handle, verified: false, imported: true }, data);
+    S.imported = (S.imported || []).filter((p) => p.id !== persona.id);
+    S.imported.push(persona);
+    if (!S.follows.includes(persona.id)) S.follows.push(persona.id);
+    // seed a couple of posts from them into the feed
+    for (let i = 0; i < 2; i++) { const post = makePersonaPost(persona); post.ts = now() - i * 3600000; S.posts.unshift(post); }
+    save();
+    toast("Imported @" + handle + " ✨");
+    nav("user", persona.id);
+  }
+  function closeSearchKeyboard() { const el = $("#exSearch"); if (el) el.blur(); }
 
   /* ============================================================= *
    *  View: DM list + chat
    * ============================================================= */
   function renderDMs() {
-    const rows = PERSONAS.map((p) => {
+    const withThreads = Object.keys(S.dms).filter((id) => (S.dms[id] || []).length).map(personaById).filter(Boolean);
+    const list = [];
+    const seen = new Set();
+    withThreads.concat(S.imported, FEATURED).forEach((p) => { if (p && !seen.has(p.id)) { seen.add(p.id); list.push(p); } });
+    const rows = list.map((p) => {
       const thread = S.dms[p.id] || [];
       const last = thread[thread.length - 1];
       const preview = last ? (last.role === "user" ? "You: " : "") + last.text : "Send a message";
@@ -626,7 +782,7 @@
           </div>
         </div>
       </div>
-      <div class="profile-bio"><div class="name">${esc(name)}</div>${esc(bio)}</div>
+      <div class="profile-bio"><div class="name">${esc(name)}${!isMe && p.verified ? ' <span class="vc">✓</span>' : ""}</div>${esc(bio)}${!isMe && p.imported ? '<div class="hint" style="margin-top:6px">🤖 AI persona imagined from the handle — not affiliated with any real account.</div>' : ""}</div>
       ${actions}
       <div class="profile-tabs"><button class="active">▦ Posts</button></div>
       ${grid}
@@ -716,16 +872,26 @@
 
   function openSettings() {
     const st = S.settings;
+    const themeBtn = (v, lbl) => `<button class="seg ${(st.theme || "system") === v ? "on" : ""}" data-theme="${v}">${lbl}</button>`;
     const ov = openModal(`<div class="sheet">
       <div class="sheet-head"><h2>Settings</h2><button class="x" data-x>×</button></div>
       <div class="sheet-body">
+        <div class="field"><label>Appearance</label><div class="seg-row">${themeBtn("system", "System")}${themeBtn("light", "Light")}${themeBtn("dark", "Dark")}</div></div>
+        <div style="border-top:1px solid var(--border);margin:16px 0"></div>
         <div class="toggle-row">
-          <div><div class="label">Real AI (Claude)</div><div class="hint" style="margin:2px 0 0">Off = built-in offline engine (free, unlimited). On = smarter, more lifelike replies via your API key.</div></div>
+          <div><div class="label">Real AI</div><div class="hint" style="margin:2px 0 0">Off = built-in offline engine (free, unlimited). On = smarter, context-aware replies via your API key.</div></div>
           <label class="switch"><input type="checkbox" id="setReal" ${st.realAI ? "checked" : ""}><span class="track"></span></label>
         </div>
         <div id="apiWrap" ${st.realAI ? "" : "hidden"}>
-          <div class="field"><label>Anthropic API key</label><input id="setKey" type="password" placeholder="sk-ant-..." value="${esc(st.apiKey)}" />
-            <div class="hint">Stored only in this browser (localStorage) and sent directly to Anthropic. Get one at <code>console.anthropic.com</code>. Uses <code>${esc(st.model)}</code> — roughly a tenth of a cent per action.</div>
+          <div class="field"><label>Provider</label><select id="setProvider">
+            <option value="openrouter" ${st.provider === "openrouter" ? "selected" : ""}>OpenRouter (sk-or-…)</option>
+            <option value="anthropic" ${st.provider === "anthropic" ? "selected" : ""}>Anthropic direct (sk-ant-…)</option>
+          </select></div>
+          <div class="field"><label>Model</label><input id="setModel" value="${esc(st.model)}" />
+            <div class="hint" id="modelHint"></div>
+          </div>
+          <div class="field"><label>API key</label><input id="setKey" type="password" placeholder="paste your key" value="${esc(st.apiKey)}" />
+            <div class="hint">Stored only in this browser and sent directly to the provider. If you pasted this key anywhere public, rotate it.</div>
           </div>
           <button class="btn" id="setTest">Test connection</button>
           <div id="setStatus" style="margin-top:10px"></div>
@@ -735,14 +901,29 @@
       </div>
     </div>`);
     $("[data-x]", ov).onclick = closeModal;
-    const real = $("#setReal", ov), wrap = $("#apiWrap", ov), key = $("#setKey", ov);
+    ov.querySelectorAll("[data-theme]").forEach((b) => b.onclick = () => {
+      S.settings.theme = b.dataset.theme; save(); applyTheme();
+      ov.querySelectorAll("[data-theme]").forEach((x) => x.classList.toggle("on", x === b));
+    });
+    const real = $("#setReal", ov), wrap = $("#apiWrap", ov), key = $("#setKey", ov), prov = $("#setProvider", ov), model = $("#setModel", ov), hint = $("#modelHint", ov);
+    const refreshHint = () => { hint.innerHTML = prov.value === "openrouter" ? 'e.g. <code>anthropic/claude-3.5-haiku</code>, <code>openai/gpt-4o-mini</code> — see openrouter.ai/models' : 'e.g. <code>claude-haiku-4-5</code>'; };
+    refreshHint();
     real.onchange = () => { S.settings.realAI = real.checked; wrap.hidden = !real.checked; save(); };
     key.oninput = () => { S.settings.apiKey = key.value.trim(); save(); };
+    model.oninput = () => { S.settings.model = model.value.trim(); save(); };
+    prov.onchange = () => {
+      S.settings.provider = prov.value;
+      // sensible default model when switching providers
+      const hasSlash = /\//.test(S.settings.model);
+      if (prov.value === "openrouter" && !hasSlash) S.settings.model = "anthropic/claude-3.5-haiku";
+      if (prov.value === "anthropic" && hasSlash) S.settings.model = "claude-haiku-4-5";
+      model.value = S.settings.model; save(); refreshHint();
+    };
     $("#setTest", ov).onclick = async () => {
       const status = $("#setStatus", ov);
       status.innerHTML = '<span class="status-pill off">Testing…</span>';
       try {
-        const txt = await callClaude(PERSONAS[0], [{ role: "user", content: "say hi in 3 words" }], { maxTokens: 20 });
+        const txt = await callClaude(FEATURED[0], [{ role: "user", content: "say hi in 3 words" }], { maxTokens: 20 });
         status.innerHTML = `<span class="status-pill on">✓ Connected</span> <span class="hint">${esc(txt.slice(0, 40))}</span>`;
       } catch (e) {
         status.innerHTML = `<span class="status-pill off">✗ ${esc(e.message)}</span>`;
@@ -750,7 +931,7 @@
     };
     $("#setReset", ov).onclick = () => {
       if (confirm("Clear all posts, DMs and settings? This can't be undone.")) {
-        localStorage.removeItem(LS_KEY); S = defaultState(); seedFeed(); closeModal(); nav("home"); toast("App reset");
+        localStorage.removeItem(LS_KEY); S = defaultState(); seedFeed(); applyTheme(); closeModal(); nav("home"); toast("App reset");
       }
     };
   }
@@ -784,12 +965,29 @@
   /* ============================================================= *
    *  Boot
    * ============================================================= */
+  function resolveTheme(t) {
+    if (t === "dark") return "dark";
+    if (t === "light") return "light";
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  function applyTheme() {
+    const r = resolveTheme(S.settings.theme || "system");
+    document.documentElement.setAttribute("data-theme", r);
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", r === "dark" ? "#000000" : "#ffffff");
+  }
+  if (window.matchMedia) {
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    (mq.addEventListener ? mq.addEventListener.bind(mq, "change") : mq.addListener.bind(mq))(() => { if ((S.settings.theme || "system") === "system") applyTheme(); });
+  }
+
   document.querySelectorAll("[data-nav]").forEach((el) => {
     el.addEventListener("click", () => nav(el.dataset.nav));
   });
+  applyTheme();
   updateNavAvatar();
   render();
 
   // expose a tiny bit for debugging
-  window.Solo = { state: () => S, reset: () => { localStorage.removeItem(LS_KEY); location.reload(); } };
+  window.Solo = { state: () => S, roster: () => ROSTER.length, reset: () => { localStorage.removeItem(LS_KEY); location.reload(); } };
 })();
