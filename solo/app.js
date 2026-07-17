@@ -267,42 +267,85 @@
     const tail = r() < 0.6 ? " " + pick(persona.motifs, r) : "";
     return base + tail;
   };
-  const genComment = (persona, caption) => {
-    const r = rng(persona.id + (caption || "") + Math.random());
-    const useInterest = r() < 0.5 && COMMENT_BANK[persona.interest];
-    const bank = useInterest ? COMMENT_BANK[persona.interest] : COMMENT_BANK.generic;
-    return pick(bank, r);
+  // --- lightweight context extraction so offline replies react to what you said ---
+  const STOPWORDS = new Set("the a an and or but is are was were be been being do does did have has had will would can could should i you my your me we they it he she this that these those of to in on at for with from as so just really very today now im ive dont cant not too also about like get got yeah okay ok yes no thanks thank please u ur".split(" "));
+  const topicWord = (text) => {
+    if (!text) return null;
+    const words = String(text).toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter((w) => w.length > 3 && !STOPWORDS.has(w));
+    return words.length ? words[words.length - 1] : null;
   };
-  const DM_BANK = {
-    greeting: ["hey!! so good to hear from you 😊", "heyyy what's up!", "oh hi! perfect timing, i was just thinking about the feed", "hey you 👋 how's your world?"],
-    howareyou: ["honestly? living. you?", "so good today, the light's been perfect. how about you?", "can't complain! how are YOU doing?"],
-    compliment: ["you're too kind 🥹 thank you", "stoppp you're making me blush", "okay that just made my whole day 💛", "means a lot coming from you"],
-    question: ["ooh good question. honestly i just follow whatever feels alive that day", "hmm i'd say: don't overthink it. the good stuff comes when you're not forcing it", "for me it always starts with a feeling, then i chase it", "depends on the day! but mostly i just show up and see what happens"],
-    bye: ["talk soon!! 💫", "okay go live your life, ttyl 😄", "later! don't be a stranger", "bye for now 🌙"],
-    generic: ["haha totally", "oof i feel that", "honestly same", "tell me more!", "that's so real", "okay but that's kind of beautiful", "love that for you", "you get it 💛", "wait that's actually a great point", " hmm i've been thinking about that too"],
+  // anti-repeat: don't reuse the same line for a persona twice in a row
+  const _recent = {};
+  const antiRepeat = (key, gen) => {
+    let line;
+    for (let i = 0; i < 5; i++) {
+      line = gen();
+      const rec = _recent[key] || (_recent[key] = []);
+      if (!rec.includes(line)) { rec.push(line); if (rec.length > 8) rec.shift(); return line; }
+    }
+    return line;
   };
+
+  const COMMENT_OPENERS = ["this is stunning 😍", "obsessed with this", "okay this is SO good", "how are you real 😭", "saving this rn", "the vibe here is immaculate", "no notes, honestly", "stop it this is too good", "i can't stop looking at this", "yes yes yes 🙌", "this just made my feed better", "ok wow", "instant like from me", "the talent is unreal", "why is this so good", "living for this"];
+  const COMMENT_REF = ["that {kw} detail? perfect", "the {kw} is everything here", "{kw} done right 👏", "obsessed with the {kw}", "the {kw} though 🔥", "you and {kw} = a whole mood"];
+  const genComment = (persona, text) => antiRepeat("c" + persona.id, () => {
+    const r = rng(persona.id + (text || "") + Math.random());
+    const kw = topicWord(text);
+    let line;
+    const roll = r();
+    if (kw && roll < 0.4) line = pick(COMMENT_REF, r).replace("{kw}", kw);
+    else if (COMMENT_BANK[persona.interest] && roll < 0.7) line = pick(COMMENT_BANK[persona.interest], r);
+    else line = pick(COMMENT_OPENERS, r);
+    if (r() < 0.4) line += " " + pick(persona.motifs, r);
+    return line;
+  });
+
+  const DM_OPENERS = {
+    greeting: ["heyyy 👋", "oh hi!! so good to hear from you", "hey you 😊", "ayy what's up!", "hii! perfect timing", "hey hey 💫"],
+    howareyou: ["honestly? really good today", "living, thanks for asking 😄", "can't complain — kind of a golden day", "i'm great! a bit all over the place but great", "so-so, but this just made it better"],
+    compliment: ["stoppp 🥹 you're too sweet", "okay that just made my whole day 💛", "aw, that means a lot coming from you", "you're gonna make me blush 😊", "genuinely, thank you 🙏"],
+    question: ["ooh good question", "hmm okay let me think", "honestly?", "great question tbh", "love that you asked that"],
+    bye: ["talk soon!! 💫", "okay go live your life, ttyl 😄", "later!! don't be a stranger", "bye for now 🌙", "catch you later 💛"],
+    generic: ["haha totally", "oof i feel that so hard", "honestly same", "that's so real", "wait that's kind of beautiful", "okay i love that", "ngl that's a whole mood", "you totally get it 💛", "hah, fair"],
+  };
+  const DM_REFLECT = ["the {kw} thing? honestly i just go with my gut on that", "funny you mention {kw} — been thinking about it a lot", "{kw} is such a mood right now", "ngl {kw} kind of lives in my head rent-free", "i could talk about {kw} for hours", "{kw}, yes. all day."];
+  const DM_FOLLOWUP = ["what got you into {topic}?", "are you into {topic} too?", "what's your vibe today?", "tell me something good that happened 😊", "what are you working on lately?", "okay your turn — what's new with you?", "how's your day going really?"];
   const detectIntent = (t) => {
-    t = t.toLowerCase();
-    if (/\b(hi|hey|hello|yo|sup|hiya|heya)\b/.test(t)) return "greeting";
+    t = (t || "").toLowerCase();
     if (/how are you|how's it going|how are u|hbu|wyd|what'?s up/.test(t)) return "howareyou";
-    if (/\b(love|amazing|beautiful|great|awesome|gorgeous|talented|incredible|nice|cool)\b/.test(t)) return "compliment";
-    if (/\bbye|gtg|goodnight|good night|see ya|talk later|cya\b/.test(t)) return "bye";
-    if (/\?/.test(t) || /\b(how|what|why|when|where|do you|can you|should)\b/.test(t)) return "question";
+    if (/\b(hi|hey|hello|yo|sup|hiya|heya|morning|evening)\b/.test(t)) return "greeting";
+    if (/\b(love|amazing|beautiful|great|awesome|gorgeous|talented|incredible|nice|cool|obsessed|favorite|favourite|best)\b/.test(t)) return "compliment";
+    if (/\b(bye|gtg|goodnight|good night|see ya|talk later|cya|night)\b/.test(t)) return "bye";
+    if (/\?/.test(t) || /\b(how|what|why|when|where|who|which|do you|can you|would you|should|tell me)\b/.test(t)) return "question";
     return "generic";
   };
-  const genDMReply = (persona, userText) => {
-    const intent = detectIntent(userText);
+  const joinParts = (parts) => parts.reduce((acc, p) => {
+    p = p.trim(); if (!acc) return p;
+    return acc + (/[a-z0-9]$/i.test(acc) ? " — " : " ") + p;
+  }, "");
+  const genDMReply = (persona, userText) => antiRepeat("d" + persona.id, () => {
     const r = rng(persona.id + userText + Math.random());
-    let line = pick(DM_BANK[intent] || DM_BANK.generic, r);
-    // sprinkle persona flavor
-    if (r() < 0.4) line += " " + pick(persona.motifs, r);
+    const intent = detectIntent(userText);
+    const kw = topicWord(userText);
+    const topic = NICHE_TOPIC[persona.interest] || persona.interest;
+    const parts = [pick(DM_OPENERS[intent] || DM_OPENERS.generic, r)];
+    let addedReflect = false;
+    if (kw && intent !== "greeting" && intent !== "bye" && r() < 0.7) { parts.push(pick(DM_REFLECT, r).replace("{kw}", kw)); addedReflect = true; }
+    if (intent !== "bye" && r() < (addedReflect ? 0.3 : 0.6)) parts.push(pick(DM_FOLLOWUP, r).replace("{topic}", topic));
+    let line = joinParts(parts);
+    if (r() < 0.3) line += " " + pick(persona.motifs, r);
     return line.trim();
-  };
+  });
 
   /* ============================================================= *
    *  Real AI engine (Anthropic API via browser)  — optional
    * ============================================================= */
   const realAvailable = () => S.settings.realAI && S.settings.apiKey && S.settings.apiKey.length > 10;
+  let _aiErrAt = 0;
+  const aiErr = (e) => {
+    const t = now();
+    if (t - _aiErrAt > 8000) { _aiErrAt = t; toast("Real AI failed (" + ((e && e.message) || "error") + ") — check Settings › Test connection"); }
+  };
   const personaSystem = (persona, opts = {}) =>
     `You are ${persona.name} (@${persona.handle}), a persona on a social app where every account except the one human user is an AI. Personality: ${persona.voice} Your bio: "${persona.bio}". Stay fully in character. Keep replies short and natural for social media / DMs — usually one or two sentences, casual, with the occasional emoji. Never mention being an AI or a language model.` + (opts.extra || "");
 
@@ -338,7 +381,7 @@
     if (realAvailable()) {
       try {
         return await callClaude(persona, [{ role: "user", content: `Write a single Instagram caption for a new photo you're posting today about ${persona.interest}. Just the caption text, no quotes.` }], { maxTokens: 60 });
-      } catch (e) { /* fall through */ }
+      } catch (e) { aiErr(e); }
     }
     return genCaption(persona);
   }
@@ -346,7 +389,7 @@
     if (realAvailable()) {
       try {
         return await callClaude(persona, [{ role: "user", content: `Someone you follow just posted this caption: "${caption}". Write a short, natural Instagram comment reacting to it. Just the comment, no quotes.` }], { maxTokens: 40 });
-      } catch (e) {}
+      } catch (e) { aiErr(e); }
     }
     return genComment(persona, caption);
   }
@@ -354,7 +397,7 @@
     const history = (S.dms[persona.id] || []).slice(-16).map((m) => ({ role: m.role, content: m.text }));
     if (!history.length) return genDMReply(persona, "hi");
     if (realAvailable()) {
-      try { return await callClaude(persona, history, { maxTokens: 120 }); } catch (e) { toast("AI error — using offline replies"); }
+      try { return await callClaude(persona, history, { maxTokens: 120 }); } catch (e) { aiErr(e); }
     }
     const lastUser = [...(S.dms[persona.id] || [])].reverse().find((m) => m.role === "user");
     return genDMReply(persona, lastUser ? lastUser.text : "hi");
@@ -742,7 +785,7 @@
       <div class="chat-head">
         <button class="back" data-back>‹</button>
         <div class="avatar">${svgAvatar(p.id, p.aesthetic)}</div>
-        <div class="name">${esc(p.name)}<small>@${esc(p.handle)} · usually replies instantly</small></div>
+        <div class="name">${esc(p.name)}<small>@${esc(p.handle)} · ${realAvailable() ? "powered by real AI" : "demo replies — connect AI in Settings"}</small></div>
       </div>
       <div class="chat-body" id="chatBody">
         ${msgs.length ? msgs.map(bubbleHTML).join("") : `<div class="empty"><div class="big">Say hi to ${esc(p.name)} 👋</div>They're an AI — but they'll reply like a friend. No limits, message as much as you want.</div>`}
