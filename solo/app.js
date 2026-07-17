@@ -201,7 +201,7 @@
    * ============================================================= */
   const LS_KEY = "solo.v1";
   const defaultState = () => ({
-    user: { name: "You", handle: "you", bio: "just vibing in a world of AIs ✨", aesthetic: "candy", avatarSeed: "me" },
+    user: { name: "You", handle: "you", bio: "just vibing in a world of AIs ✨", aesthetic: "candy", avatarSeed: "me", followers: 0 },
     follows: PERSONAS.map((p) => p.id),           // following everyone by default
     posts: [],                                    // feed posts (persona + your posts), newest first
     dms: {},                                      // { personaId: [{role:'user'|'assistant', text, ts}] }
@@ -221,13 +221,32 @@
         merged.settings = Object.assign({}, d.settings, p.settings || {});
         merged.user = Object.assign({}, d.user, p.user || {});
         merged.imported = Array.isArray(p.imported) ? p.imported : [];
+        (merged.posts || []).forEach((pp) => (pp.comments || []).forEach(normComment));
         return merged;
       }
     } catch (e) {}
     return d;
   }
-  let saveTimer;
-  function save() { clearTimeout(saveTimer); saveTimer = setTimeout(() => { try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch (e) {} }, 200); }
+  let saveTimer, _quotaWarned = false;
+  function save() { clearTimeout(saveTimer); saveTimer = setTimeout(() => { try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch (e) { if (!_quotaWarned) { _quotaWarned = true; toast("Device storage is full — older posts may not be saved"); } } }, 200); }
+
+  // Resize a chosen photo down so it fits in localStorage (phone photos are huge).
+  function fileToResizedDataURL(file, maxDim, quality) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * scale)), h = Math.max(1, Math.round(img.height * scale));
+        const c = document.createElement("canvas"); c.width = w; c.height = h;
+        c.getContext("2d").drawImage(img, 0, 0, w, h);
+        try { resolve(c.toDataURL("image/jpeg", quality)); } catch (e) { reject(e); }
+      };
+      img.onerror = reject;
+      img.src = url;
+    });
+  }
 
   /* ============================================================= *
    *  Simulated AI engine (offline, unlimited, free)
@@ -413,10 +432,10 @@
     const comments = [];
     for (let i = 0; i < nComments; i++) {
       const cp = pick(PERSONAS, r);
-      comments.push({ by: cp.id, text: genComment(cp, "") });
+      comments.push({ id: uid(), by: cp.id, text: genComment(cp, ""), ts: now() - Math.floor(r() * 36e5), likes: Math.floor(r() * 60), liked: false, replies: [] });
     }
     return {
-      id: uid(), author: persona.id, mine: false,
+      id: uid(), author: persona.id, mine: false, kind: "art",
       img: { seed, palette: persona.aesthetic, motif: pick(persona.motifs, r) },
       caption: genCaption(persona),
       likes: 40 + Math.floor(r() * 4000),
@@ -456,9 +475,10 @@
         const cur = S.posts.find((p) => p.id === post.id);
         if (!cur) return;
         cur.likes += 1 + Math.floor(Math.random() * 3);
+        gainFollowers(1 + Math.floor(Math.random() * 4));
         if (Math.random() < 0.75) {
-          const text = await aiComment(persona, cur.caption);
-          cur.comments.push({ by: persona.id, text });
+          const text = await aiComment(persona, cur.caption || cur.text || "");
+          cur.comments.push({ id: uid(), by: persona.id, text, ts: now(), likes: 0, liked: false, replies: [] });
         }
         save();
         // live-update the DOM if this post is on screen
@@ -548,13 +568,60 @@
     return { name: p.name, handle: p.handle, avatar: svgAvatar(p.id, p.aesthetic), aesthetic: p.aesthetic, id: p.id };
   }
 
+  function normComment(c) {
+    if (!c) return c;
+    c.id = c.id || uid(); c.ts = c.ts || now(); c.likes = c.likes || 0; c.liked = !!c.liked;
+    c.replies = Array.isArray(c.replies) ? c.replies.map(normReply) : [];
+    return c;
+  }
+  function normReply(r) { r.id = r.id || uid(); r.ts = r.ts || now(); r.likes = r.likes || 0; r.liked = !!r.liked; return r; }
+  const commentCount = (post) => post.comments.reduce((n, c) => n + 1 + ((c.replies && c.replies.length) || 0), 0);
+
+  function gainFollowers(n) { S.user.followers = (S.user.followers || 0) + n; save(); updateFollowerUI(); }
+  function updateFollowerUI() {
+    if (route.name !== "profile") return;
+    const el = document.querySelector(".profile-stats .followers-num");
+    if (el) el.textContent = fmtCount(S.user.followers || 0);
+  }
+  function toggleCommentLike(post, cid) {
+    const all = [];
+    post.comments.forEach((c) => { all.push(c); (c.replies || []).forEach((r) => all.push(r)); });
+    const c = all.find((x) => x.id === cid); if (!c) return;
+    c.liked = !c.liked; c.likes = Math.max(0, (c.likes || 0) + (c.liked ? 1 : -1)); save();
+  }
+  async function addAIReply(post, parent, personaId, replyToText) {
+    const persona = personaById(personaId); if (!persona) return;
+    normComment(parent);
+    const pending = { id: uid(), by: persona.id, text: "", pending: true, ts: now(), likes: 0, liked: false };
+    parent.replies.push(pending);
+    let reply;
+    if (realAvailable()) {
+      try { reply = await callClaude(persona, [{ role: "user", content: `On your post "${post.caption || post.text || ""}", someone replied to a comment: "${replyToText}". Reply briefly and in character. Just the reply, no quotes.` }], { maxTokens: 40 }); }
+      catch (e) { aiErr(e); }
+    }
+    if (!reply) reply = genComment(persona, replyToText);
+    const idx = parent.replies.indexOf(pending);
+    if (idx > -1) parent.replies[idx] = { id: pending.id, by: persona.id, text: reply, ts: now(), likes: 0, liked: false };
+    save();
+  }
+  function textCardHTML(post) {
+    const pal = PALETTES[post.textPalette] || PALETTES.candy;
+    return `<div class="textcard" style="background:linear-gradient(135deg,${pal[0]},${pal[3]})"><span>${esc(post.text || "")}</span></div>`;
+  }
+  function postMedia(post) {
+    if (post.kind === "photo" && post.img && post.img.dataUrl) return `<img class="post-photo" src="${post.img.dataUrl}" alt="" />`;
+    if (post.kind === "text") return textCardHTML(post);
+    return svgPhoto(post.img.seed, post.img.palette, post.img.motif);
+  }
+
   function postHTML(post) {
     const a = authorMeta(post);
-    const captionLine = post.caption ? `<div class="post-caption"><span class="handle" data-user="${post.mine ? "me" : a.id}">${esc(a.handle)}</span>${esc(post.caption)}</div>` : "";
+    const captionLine = (post.kind !== "text" && post.caption) ? `<div class="post-caption"><span class="handle" data-user="${post.mine ? "me" : a.id}">${esc(a.handle)}</span>${esc(post.caption)}</div>` : "";
+    const total = commentCount(post);
     const shownComments = post.comments.slice(-2);
-    const hidden = post.comments.length - shownComments.length;
+    const hidden = total - shownComments.length;
     const commentsHTML = post.comments.length ? `<div class="post-comments">
-      ${hidden > 0 ? `<div class="view-all" data-viewall="${post.id}">View all ${post.comments.length} comments</div>` : ""}
+      ${total > 0 ? `<div class="view-all" data-viewall="${post.id}">View all ${total} comment${total === 1 ? "" : "s"}</div>` : ""}
       ${shownComments.map(commentHTML).join("")}
     </div>` : "";
     return `<article class="post" data-post="${post.id}">
@@ -563,7 +630,7 @@
         <div class="who"><div class="handle" data-user="${post.mine ? "me" : a.id}">${esc(a.handle)}</div>${post.mine ? '<div class="sub">You</div>' : ""}</div>
         <button class="more" data-more="${post.id}">⋯</button>
       </div>
-      <div class="postimg" data-like-tap="${post.id}">${svgPhoto(post.img.seed, post.img.palette, post.img.motif)}<div class="heart-pop">${HEART_SVG(true)}</div></div>
+      <div class="postimg" data-like-tap="${post.id}">${postMedia(post)}<div class="heart-pop">${HEART_SVG(true)}</div></div>
       <div class="post-actions">
         <button class="act like ${post.liked ? "liked" : ""}" data-like="${post.id}">${HEART_SVG(post.liked)}</button>
         <button class="act" data-focuscomment="${post.id}">${COMMENT_SVG}</button>
@@ -605,7 +672,7 @@
       el.onclick = () => { const t = now(); if (t - last < 350) doubleTapLike(el.dataset.likeTap, el); last = t; };
     });
     root.querySelectorAll("[data-save]").forEach((b) => b.onclick = () => toggleSave(b.dataset.save));
-    root.querySelectorAll("[data-viewall]").forEach((b) => b.onclick = () => openPostComments(b.dataset.viewall));
+    root.querySelectorAll("[data-viewall]").forEach((b) => b.onclick = () => openComments(b.dataset.viewall));
     root.querySelectorAll("[data-more]").forEach((b) => b.onclick = () => openPostMore(b.dataset.more));
     root.querySelectorAll("[data-share]").forEach((b) => b.onclick = () => toast("Sharing is just between you and the AIs here ✨"));
     root.querySelectorAll("[data-focuscomment]").forEach((b) => b.onclick = () => { const i = document.querySelector(`[data-commentinput="${b.dataset.focuscomment}"]`); if (i) i.focus(); });
@@ -638,20 +705,12 @@
   async function sendComment(id, text, inp) {
     text = (text || "").trim(); if (!text) return;
     const p = S.posts.find((x) => x.id === id); if (!p) return;
-    p.comments.push({ by: "me", text }); save();
+    const myC = { id: uid(), by: "me", text, ts: now(), likes: 0, liked: false, replies: [] };
+    p.comments.push(myC); save();
     if (inp) { inp.value = ""; const btn = document.querySelector(`[data-commentsend="${id}"]`); if (btn) btn.classList.remove("on"); }
     rerenderPostIfVisible(p);
-    // The author (if AI) replies to your comment
-    if (!p.mine) {
-      const persona = personaById(p.author);
-      const pending = { by: persona.id, text: "", pending: true };
-      p.comments.push(pending); rerenderPostIfVisible(p);
-      let reply;
-      if (realAvailable()) { try { reply = await callClaude(persona, [{ role: "user", content: `On your post captioned "${p.caption}", someone commented: "${text}". Reply to their comment briefly and in character. Just the reply.` }], { maxTokens: 40 }); } catch (e) {} }
-      if (!reply) reply = genComment(persona, text);
-      const idx = p.comments.indexOf(pending); if (idx > -1) p.comments[idx] = { by: persona.id, text: reply };
-      save(); rerenderPostIfVisible(p);
-    }
+    // The author (if AI) replies to your comment (nested under it)
+    if (!p.mine) { await addAIReply(p, myC, p.author, text); rerenderPostIfVisible(p); }
   }
 
   /* ============================================================= *
@@ -851,10 +910,10 @@
       gridPosts = renderProfile._cache[p.id].map((g) => ({ img: g }));
     }
     const postCount = isMe ? myPosts.length : 12 + hash(p.id) % 240;
-    const followers = isMe ? 0 : 800 + hash(p.id + "f") % 90000;
+    const followers = isMe ? (S.user.followers || 0) : 800 + hash(p.id + "f") % 90000;
     const followingCount = isMe ? S.follows.length : 200 + hash(p.id + "g") % 1200;
 
-    const grid = gridPosts.length ? `<div class="grid">${gridPosts.map((g, i) => `<button class="cell" ${isMe ? `data-openpost="${g.id}"` : ""}><div class="postimg">${svgPhoto(g.img.seed, g.img.palette, g.img.motif)}</div></button>`).join("")}</div>`
+    const grid = gridPosts.length ? `<div class="grid">${gridPosts.map((g, i) => `<button class="cell" ${isMe ? `data-openpost="${g.id}"` : ""}><div class="postimg">${postMedia(g)}</div></button>`).join("")}</div>`
       : `<div class="empty"><div class="big">No posts yet</div>Tap + to share your first post — your AI followers are waiting 👀</div>`;
 
     const actions = isMe
@@ -867,7 +926,7 @@
           <div class="avatar">${avatar}</div>
           <div class="profile-stats">
             <div class="stat"><span class="num">${fmtCount(postCount)}</span><span class="lbl">posts</span></div>
-            <div class="stat"><span class="num">${fmtCount(followers)}</span><span class="lbl">followers</span></div>
+            <div class="stat"><span class="num followers-num">${fmtCount(followers)}</span><span class="lbl">followers</span></div>
             <div class="stat"><span class="num">${fmtCount(followingCount)}</span><span class="lbl">following</span></div>
           </div>
         </div>
@@ -903,34 +962,56 @@
 
   function openCreate() {
     const aesthetics = Object.keys(PALETTES);
-    let sel = S.user.aesthetic;
-    let motif = "";
+    let photoData = null;
+    let textPalette = S.user.aesthetic;
     const ov = openModal(`<div class="sheet">
       <div class="sheet-head"><h2>New post</h2><button class="x" data-x>×</button></div>
       <div class="sheet-body">
-        <div class="field"><label>Preview</label><div class="postimg" id="createPreview" style="border-radius:10px;overflow:hidden">${svgPhoto("new" + now(), sel, motif)}</div></div>
-        <div class="field"><label>Style</label><div class="aesthetic-row" id="aesthetics">
-          ${aesthetics.map((a) => `<button data-a="${a}" class="${a === sel ? "sel" : ""}">${svgPhoto("swatch" + a, a, "")}</button>`).join("")}
+        <div class="field">
+          <label>Photo</label>
+          <label class="photo-drop" id="photoDrop">
+            <input type="file" id="photoInput" accept="image/*" hidden />
+            <div id="photoPlaceholder">📷<div><span>Tap to add a photo</span><small>from your library or camera</small></div></div>
+            <img id="photoPreview" hidden alt="" />
+          </label>
+          <button class="btn" id="removePhoto" hidden style="margin-top:8px">Remove photo — post as text</button>
+        </div>
+        <div class="field" id="textStyleField"><label>Card background</label><div class="aesthetic-row">
+          ${aesthetics.map((a) => `<button type="button" data-tp="${a}" class="${a === textPalette ? "sel" : ""}" style="background:linear-gradient(135deg,${PALETTES[a][0]},${PALETTES[a][3]})"></button>`).join("")}
         </div></div>
-        <div class="field"><label>Vibe (emoji, optional)</label><input id="createMotif" placeholder="e.g. 🌅 🍜 🎸" maxlength="4" /></div>
-        <div class="field"><label>Caption</label><textarea id="createCaption" placeholder="Write a caption…"></textarea></div>
+        <div class="field"><label id="capLabel">Text</label><textarea id="createCaption" placeholder="Write your post… (add a photo above, or post text only)"></textarea></div>
         <button class="btn primary" id="createShare">Share</button>
-        <div class="hint">Your AI followers will start liking and commenting within seconds — no daily limits, post as often as you like.</div>
+        <div class="hint">No photo = a text post. Your AI followers react within seconds, and every post grows your follower count 📈</div>
       </div>
     </div>`);
     $("[data-x]", ov).onclick = closeModal;
-    let seed = "new" + now();
-    const preview = $("#createPreview", ov);
-    const refresh = () => { preview.innerHTML = svgPhoto(seed, sel, motif); };
-    ov.querySelectorAll("[data-a]").forEach((b) => b.onclick = () => { sel = b.dataset.a; ov.querySelectorAll("[data-a]").forEach((x) => x.classList.toggle("sel", x === b)); refresh(); });
-    $("#createMotif", ov).oninput = (e) => { motif = e.target.value.trim(); refresh(); };
+    const fileInput = $("#photoInput", ov), ph = $("#photoPlaceholder", ov), prev = $("#photoPreview", ov), removeBtn = $("#removePhoto", ov), textStyle = $("#textStyleField", ov), capLabel = $("#capLabel", ov);
+    const updateMode = () => {
+      const has = !!photoData;
+      ph.hidden = has; prev.hidden = !has; removeBtn.hidden = !has; textStyle.hidden = has;
+      capLabel.textContent = has ? "Caption" : "Text";
+    };
+    fileInput.onchange = async () => {
+      const f = fileInput.files && fileInput.files[0]; if (!f) return;
+      try { photoData = await fileToResizedDataURL(f, 1080, 0.82); prev.src = photoData; updateMode(); }
+      catch (e) { toast("Couldn't load that image"); }
+    };
+    removeBtn.onclick = () => { photoData = null; fileInput.value = ""; updateMode(); };
+    ov.querySelectorAll("[data-tp]").forEach((b) => b.onclick = (e) => { e.preventDefault(); textPalette = b.dataset.tp; ov.querySelectorAll("[data-tp]").forEach((x) => x.classList.toggle("sel", x === b)); });
     $("#createShare", ov).onclick = () => {
       const caption = $("#createCaption", ov).value.trim();
-      const post = { id: uid(), author: "me", mine: true, img: { seed, palette: sel, motif }, caption, likes: 0, liked: false, saved: false, comments: [], ts: now() };
+      let post;
+      if (photoData) {
+        post = { id: uid(), author: "me", mine: true, kind: "photo", img: { dataUrl: photoData }, caption, likes: 0, liked: false, saved: false, comments: [], ts: now() };
+      } else {
+        if (!caption) { toast("Add a photo, or write some text"); return; }
+        post = { id: uid(), author: "me", mine: true, kind: "text", text: caption, textPalette, caption: "", likes: 0, liked: false, saved: false, comments: [], ts: now() };
+      }
       S.posts.unshift(post); save();
       closeModal();
       route = { name: "home", param: null }; render(); window.scrollTo(0, 0);
       toast("Posted! Watch the reactions roll in ✨");
+      gainFollowers(2 + Math.floor(Math.random() * 5));
       scheduleReactions(post);
     };
   }
@@ -1026,14 +1107,72 @@
     };
   }
 
-  function openPostComments(id) {
-    const p = S.posts.find((x) => x.id === id); if (!p) return;
-    const ov = openModal(`<div class="sheet">
+  function commentRowHTML(c, isReply) {
+    const who = c.by === "me"
+      ? { handle: S.user.handle, id: "me", avatar: svgAvatar(S.user.avatarSeed, S.user.aesthetic) }
+      : (() => { const pp = personaById(c.by) || { handle: "user", id: c.by, aesthetic: "mono" }; return { handle: pp.handle, id: pp.id, avatar: svgAvatar(pp.id, pp.aesthetic) }; })();
+    const likeTxt = c.likes ? `${fmtCount(c.likes)} like${c.likes === 1 ? "" : "s"}` : "";
+    return `<div class="crow ${isReply ? "creply" : ""} ${c.pending ? "pending" : ""}">
+      <div class="avatar cav" data-user="${who.id === "me" ? "me" : who.id}">${who.avatar}</div>
+      <div class="cmain">
+        <div class="ctext"><span class="handle" data-user="${who.id === "me" ? "me" : who.id}">${esc(who.handle)}</span> ${esc(c.text)}</div>
+        <div class="cmeta"><span>${relTime(c.ts)}</span>${likeTxt ? `<span>${likeTxt}</span>` : ""}${c.pending ? "" : `<button class="creply-btn" data-reply="${c.id}" data-handle="${esc(who.handle)}">Reply</button>`}</div>
+      </div>
+      ${c.pending ? "" : `<button class="clike ${c.liked ? "liked" : ""}" data-clike="${c.id}">${HEART_SVG(c.liked)}</button>`}
+    </div>`;
+  }
+  function openComments(id) {
+    const post = S.posts.find((x) => x.id === id); if (!post) return;
+    post.comments.forEach(normComment);
+    let replyTarget = null;
+    const ov = openModal(`<div class="sheet comments-sheet">
       <div class="sheet-head"><h2>Comments</h2><button class="x" data-x>×</button></div>
-      <div class="sheet-body" id="allComments">${p.comments.length ? p.comments.map(commentHTML).join("") : '<div class="hint">No comments yet.</div>'}</div>
+      <div class="comments-body" id="cbody"></div>
+      <div class="cbar">
+        <div class="replying" id="creplying" hidden></div>
+        <div class="cbar-row"><div class="avatar cav-me">${svgAvatar(S.user.avatarSeed, S.user.aesthetic)}</div><input id="cinput" placeholder="Add a comment…" autocomplete="off" /><button id="csend">Post</button></div>
+      </div>
     </div>`);
     $("[data-x]", ov).onclick = closeModal;
-    ov.querySelectorAll("[data-user]").forEach((el) => el.onclick = () => { closeModal(); const u = el.dataset.user; nav(u === "me" ? "profile" : "user", u === "me" ? null : u); });
+    const body = $("#cbody", ov), input = $("#cinput", ov), sendBtn = $("#csend", ov), replyingBar = $("#creplying", ov);
+    function draw() {
+      body.innerHTML = post.comments.length
+        ? post.comments.map((c) => { normComment(c); return commentRowHTML(c, false) + (c.replies || []).map((r) => commentRowHTML(r, true)).join(""); }).join("")
+        : '<div class="empty"><div class="big">No comments yet</div>Start the conversation.</div>';
+      body.querySelectorAll("[data-user]").forEach((el) => el.onclick = () => { closeModal(); const u = el.dataset.user; nav(u === "me" ? "profile" : "user", u === "me" ? null : u); });
+      body.querySelectorAll("[data-clike]").forEach((btn) => btn.onclick = () => { toggleCommentLike(post, btn.dataset.clike); draw(); rerenderPostIfVisible(post); });
+      body.querySelectorAll("[data-reply]").forEach((btn) => btn.onclick = () => { replyTarget = { commentId: btn.dataset.reply, handle: btn.dataset.handle }; showReplying(); input.focus(); });
+    }
+    function showReplying() {
+      if (replyTarget) {
+        replyingBar.hidden = false;
+        replyingBar.innerHTML = `Replying to @${esc(replyTarget.handle)} <button data-cancelreply>✕</button>`;
+        replyingBar.querySelector("[data-cancelreply]").onclick = () => { replyTarget = null; showReplying(); };
+        input.placeholder = `Reply to @${replyTarget.handle}…`;
+      } else { replyingBar.hidden = true; input.placeholder = "Add a comment…"; }
+    }
+    async function submit() {
+      const text = input.value.trim(); if (!text) return;
+      input.value = "";
+      if (replyTarget) {
+        const parent = post.comments.find((c) => c.id === replyTarget.commentId);
+        if (parent) {
+          normComment(parent);
+          parent.replies.push({ id: uid(), by: "me", text, ts: now(), likes: 0, liked: false });
+          save(); const parentBy = parent.by; replyTarget = null; showReplying(); draw(); body.scrollTop = body.scrollHeight;
+          if (parentBy !== "me") { await addAIReply(post, parent, parentBy, text); draw(); }
+          else if (!post.mine) { await addAIReply(post, parent, post.author, text); draw(); }
+        }
+      } else {
+        const myC = { id: uid(), by: "me", text, ts: now(), likes: 0, liked: false, replies: [] };
+        post.comments.push(myC); save(); draw(); body.scrollTop = body.scrollHeight;
+        if (!post.mine) { await addAIReply(post, myC, post.author, text); draw(); }
+      }
+      rerenderPostIfVisible(post);
+    }
+    sendBtn.onclick = submit;
+    input.onkeydown = (e) => { if (e.key === "Enter") submit(); };
+    draw();
   }
 
   function openPostMore(id) {

@@ -27,8 +27,12 @@ as you want, send as many DMs as you want, get unlimited AI comments and replies
   art + captions), infinite-scroll
 - **Likes & comments** — like posts (or double-tap the photo), and get AI comments
   that react to the specific caption. Comment yourself and the author replies in character.
-- **Your posts + live AI reactions** — create a post (pick a style, add an emoji vibe
-  and caption) and your AI followers start liking and commenting within seconds
+- **Your posts, two ways** — post a **real photo** from your library or camera, or a
+  **text-only** card. Photos are auto-resized to fit local storage.
+- **Live AI reactions + follower growth** — you start at **0 followers**; every post
+  draws AI likes and comments within seconds and grows your follower count over time
+- **Real comment section** — open any post's comments to see them all, **like** a
+  comment, and **reply** (threaded, Instagram-style); the author replies back in character
 - **DMs** — message any persona and have a real back-and-forth. Unlimited replies.
 - **Dark mode** — System / Light / Dark toggle in Settings (defaults to your OS)
 - **Profiles, follow/unfollow, explore grid, stories** — all the familiar pieces
