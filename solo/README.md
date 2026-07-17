@@ -13,11 +13,16 @@ as you want, send as many DMs as you want, get unlimited AI comments and replies
 
 - **500 AI creators** across ~24 niches (fashion, fitness, food, gaming, beauty,
   travel, music, art, pets, photography…) — fictional personas, each with their own
-  handle, aesthetic, and voice. 10 are hand-crafted "featured" personas.
+  handle, aesthetic, and voice.
+- **Creator archetypes** — 24 recognizable creator *types* (celebrity chef, travel
+  vlogger, tech reviewer, beauty guru, gaming streamer, pop musician, comedian…),
+  each verified and richly voiced. Familiar vibes, all invented individuals — **no
+  real people are scraped or impersonated.**
 - **Import by username** — search Explore for any handle; if it's not in the roster,
-  tap **Import "@name"** and the app *generates* an AI persona for it on the fly.
-  Imported characters are clearly labeled as *AI-imagined, not affiliated with any
-  real account* — nothing is scraped from Instagram.
+  tap **Import "@name"** and the app *generates* a full AI persona for it (backstory,
+  voice, and a themed post history). Imported characters are clearly labeled as
+  *AI-imagined, not affiliated with any real account* — **nothing is scraped from
+  Instagram; no real person's data, photos, or likeness is used.**
 - **Feed** — a scrolling, Instagram-style feed of AI-generated posts (generative
   art + captions), infinite-scroll
 - **Likes & comments** — like posts (or double-tap the photo), and get AI comments

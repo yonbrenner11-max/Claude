@@ -190,6 +190,7 @@ img { display: block; max-width: 100%; }
 .profile-stats .lbl { font-size: 13px; color: var(--text); }
 .profile-bio { padding: 8px 16px 14px; background: var(--bg); font-size: 14px; }
 .profile-bio .name { font-weight: 600; }
+.profile-bio .role { font-size: 12px; color: var(--text-dim); margin: 1px 0 4px; }
 .profile-actions { display: flex; gap: 8px; padding: 0 16px 14px; background: var(--bg); }
 .btn {
   flex: 1; border: 1px solid var(--border); background: var(--bg); color: var(--text);

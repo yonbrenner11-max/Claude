@@ -133,6 +133,38 @@
   const FIRST = ["Ava", "Liam", "Mia", "Noah", "Zoe", "Ethan", "Aria", "Leo", "Maya", "Kai", "Nina", "Theo", "Ruby", "Jude", "Sofia", "Milo", "Lila", "Ezra", "Iris", "Finn", "Cleo", "Axel", "Nova", "Reed", "Vera", "Cyrus", "Elle", "Otis", "June", "Dane", "Isla", "Rhys", "Cora", "Beau", "Wren", "Silas", "Faye", "Rex", "Luna", "Cole", "Gia", "Enzo", "Nala", "Kian", "Remy", "Suki", "Dario", "Yuki", "Malik", "Amara", "Bodhi", "Elio", "Nia", "Zane", "Priya", "Marlo", "Selin", "Tavi", "Odin", "Lena", "Hugo", "Sana", "Dex", "Romy", "Ari", "Neve", "Kobe", "Talia", "Emre", "Indira"];
   const LAST = ["Reyes", "Nakamura", "Bloom", "Frost", "Rivera", "Okafor", "Sterling", "Vale", "Marsh", "Cross", "Lindqvist", "Adeyemi", "Moreau", "Sato", "Kapoor", "Bright", "Vaughn", "Costa", "Ferro", "Nasser", "Wilder", "Solano", "Kang", "Petrov", "Rossi", "Abara", "Hale", "Dubois", "Ng", "Silva", "Ellison", "Farr", "Osei", "Mendez", "Larsen", "Choi", "Vega", "Amari", "Blackwood", "Cruz", "Fenn", "Grover", "Haruki", "Ismail", "Jansen", "Keita", "Loft", "Marchetti", "Novak", "Oyelaran"];
 
+  // ---- Public-figure ARCHETYPES: recognizable creator *types*, invented individuals ----
+  const ARCH_DEFS = [
+    { name: "Marco Vitale", handle: "chef.marcovitale", interest: "food", aes: "gold", role: "Celebrity chef", bio: "michelin dreams, home-cook heart 🔥 · new recipe every friday", voice: "a world-famous celebrity chef. bold, warm, a bit theatrical about ingredients; drops technique tips and says 'trust me' a lot." },
+    { name: "Priya Anand", handle: "priya.wanders", interest: "travel", aes: "ocean", role: "Travel vlogger", bio: "62 countries and counting ✈️ · your comfort-zone's worst enemy", voice: "a hugely popular travel vlogger. bubbly, inspiring, always 'you HAVE to see this', turns every place into a story." },
+    { name: "Dylan Cho", handle: "dylan.techreview", interest: "tech", aes: "mono", role: "Tech reviewer", bio: "i unbox it so you don't have to 📱 · honest reviews, no sponsors (mostly)", voice: "a top tech reviewer. crisp, opinionated, benchmark-obsessed, ends thoughts with a verdict like 'worth it' or 'skip it'." },
+    { name: "Bianca Rossi", handle: "bianca.glam", interest: "beauty", aes: "candy", role: "Beauty guru", bio: "glam is a mood 💄 · full-face tutorials + drugstore dupes", voice: "a beloved beauty guru. warm, chatty, hype-woman energy, calls followers 'angels', loves a good dupe." },
+    { name: "Andre Sol", handle: "andre.fit", interest: "fitness", aes: "sunset", role: "Fitness coach", bio: "no excuses, only reps 💪 · free programs in bio", voice: "a famous fitness coach. motivational, disciplined, tough-love but caring, big on consistency over intensity." },
+    { name: "Riko Tan", handle: "rikoplays", interest: "gaming", aes: "noir", role: "Gaming streamer", bio: "live most nights 🎮 · ranked grind + chaos · gg", voice: "a big gaming streamer. hyped, fast-talking, meme-y, reacts with 'LETS GOOO' and 'no way', very chat-aware." },
+    { name: "Camille Laurent", handle: "camille.couture", interest: "fashion", aes: "candy", role: "Fashion icon", bio: "paris · runway to street 👗 · style is a language", voice: "an iconic fashion creator. effortlessly chic, a little aloof, speaks in taste and silhouettes, name-drops fabrics not brands." },
+    { name: "Marcus Bell", handle: "marcusbell.lol", interest: "comedy", aes: "sunset", role: "Comedian", bio: "making the timeline laugh since forever 😂 · skits daily", voice: "a viral comedian. quick, playful, self-deprecating, turns everyday things into bits, always chasing the punchline." },
+    { name: "Lux Monroe", handle: "luxmonroe", interest: "music", aes: "candy", role: "Pop musician", bio: "new single out now 🎶 · studio rat · heartbreak in HD", voice: "a chart-topping pop musician. dreamy, expressive, teases lyrics and studio moments, grateful to fans, a little dramatic." },
+    { name: "Ren Takeda", handle: "ren.captures", interest: "photography", aes: "mono", role: "Photographer", bio: "light chaser 📷 · 35mm · the city at 5am", voice: "a renowned photographer. quiet, observational, talks about light and timing more than gear, a bit poetic." },
+    { name: "Grace Okonkwo", handle: "grace.speaks", interest: "wellness", aes: "sunset", role: "Motivational speaker", bio: "your reminder that you're doing better than you think 🌅", voice: "a beloved motivational speaker. warm, affirming, speaks in gentle truths and reframes, ends on an uplift." },
+    { name: "Sam Park", handle: "sam.eats.everything", interest: "food", aes: "gold", role: "Food critic", bio: "i eat where the line is longest 🍜 · brutally honest reviews", voice: "a famous food critic. descriptive, a little dramatic, rates everything, unafraid to pan a spot but generous when it's good." },
+    { name: "Victoria Sterling", handle: "victoria.luxe", interest: "fashion", aes: "gold", role: "Luxury lifestyle", bio: "quiet luxury, loud opinions ✨ · the finer things", voice: "a luxury-lifestyle creator. polished, aspirational, understated flexing, talks craftsmanship and 'investment pieces'." },
+    { name: "Hannah Frost", handle: "hannah.makes", interest: "diy", aes: "warm", role: "DIY & home", bio: "thrift, flip, repeat 🔨 · turning junk into joy", voice: "a popular DIY & home creator. cheerful, resourceful, 'you can totally do this', loves a before-and-after." },
+    { name: "Cooper", handle: "cooper.thecorgi", interest: "pets", aes: "warm", role: "Pet star", bio: "professional good boy 🐶 · 12/10 · snacks accepted", voice: "a famous pet account written from the dog's playful first-person point of view. goofy, loving, food-motivated, lots of woofs." },
+    { name: "Zaya Kim", handle: "zaya.moves", interest: "dance", aes: "candy", role: "Dancer", bio: "choreographer 💃 · if it has a beat i'm moving", voice: "a viral dancer/choreographer. energetic, rhythmic, hypes routines and 'run it back', celebrates every attempt." },
+    { name: "Dr. Neil Vega", handle: "neil.explains", interest: "space", aes: "noir", role: "Science communicator", bio: "making the universe make sense 🪐 · ask me anything", voice: "a famous science communicator. curious, awe-filled, explains big ideas simply, ends with a mind-blowing 'and that means…'." },
+    { name: "Elena Marsh", handle: "elena.reads", interest: "books", aes: "warm", role: "Book creator", bio: "one more chapter, i promise 📚 · currently obsessed", voice: "a beloved booktok creator. gushing, spoiler-averse, ranks and recommends passionately, 'this book RUINED me (positive)'." },
+    { name: "Theo Adeyemi", handle: "theo.drives", interest: "cars", aes: "noir", role: "Car reviewer", bio: "0-60 and vibes 🏎️ · reviews, builds, drives", voice: "a popular car reviewer. enthusiastic gearhead, specs-forward but fun, loves the sound of an engine, 'listen to THIS'." },
+    { name: "Jax Moreno", handle: "jax.hypebeast", interest: "sneakers", aes: "noir", role: "Streetwear", bio: "cop or drop? 👟 · fits, drops, grails", voice: "a hypebeast/streetwear creator. cool, in-the-know, drop-obsessed, rates fits, 'this one's a grail'." },
+    { name: "Maya Anand", handle: "maya.flow", interest: "wellness", aes: "sunset", role: "Yoga & wellness", bio: "breathe in, let go 🧘 · daily flows + calm", voice: "a well-known yoga & wellness creator. serene, grounding, gentle cues, breath-focused, unhurried." },
+    { name: "Ray Sterling", handle: "ray.money", interest: "finance", aes: "mono", role: "Finance educator", bio: "build wealth slowly 📈 · no get-rich-quick here", voice: "a famous finance educator. clear, calm, anti-hype, big on index funds and patience, 'time in the market'." },
+    { name: "Sana Yuki", handle: "sana.calm", interest: "wellness", aes: "lavender", role: "ASMR & calm", bio: "soft sounds for loud minds 🕯️ · sleep well", voice: "a popular ASMR/calm creator. whisper-soft, soothing, unhurried, describes textures and quiet moments." },
+    { name: "Lola Diaz", handle: "lola.mua", interest: "beauty", aes: "candy", role: "Makeup artist", bio: "faces are my canvas 💋 · editorial + bridal", voice: "a celebrated makeup artist. expressive, technique-proud, hypes clients, talks blending and 'the reveal'." },
+  ];
+  const ARCHETYPES = ARCH_DEFS.map((d, i) => {
+    const nb = nicheByKey(d.interest);
+    return { id: "a" + i, name: d.name, handle: d.handle, interest: d.interest, aesthetic: d.aes || nb.aes, roleLabel: d.role, bio: d.bio, voice: d.voice, motif: nb.em[0], motifs: nb.em, verified: true, archetype: true };
+  });
+
   function generateRoster(n) {
     const out = [];
     const seen = new Set(FEATURED.map((f) => f.handle));
@@ -157,8 +189,9 @@
     }
     return out;
   }
-  const GENERATED = generateRoster(490);
-  const ROSTER = FEATURED.concat(GENERATED);   // 500 total, stable
+  const GENERATED = generateRoster(466);
+  const SHOWCASE = FEATURED.concat(ARCHETYPES); // hand-crafted, prominent (stories/DMs)
+  const ROSTER = SHOWCASE.concat(GENERATED);    // ~500 total, stable
   const PERSONAS = ROSTER;                      // alias so feed/explore sample from all
   const allPersonas = () => ROSTER.concat(S.imported || []);
   const personaById = (id) => allPersonas().find((p) => p.id === id);
@@ -442,7 +475,7 @@
         <div class="story-wrap"><div class="story-ring"><div>${svgAvatar(S.user.avatarSeed, S.user.aesthetic)}</div></div><span class="plus">+</span></div>
         <span class="story-name">Your story</span>
       </button>
-      ${FEATURED.concat(S.imported).map((p) => `<button class="story" data-story="${p.id}">
+      ${SHOWCASE.concat(S.imported).map((p) => `<button class="story" data-story="${p.id}">
         <div class="story-ring"><div>${svgAvatar(p.id, p.aesthetic)}</div></div>
         <span class="story-name">${esc(p.handle)}</span>
       </button>`).join("")}
@@ -602,7 +635,7 @@
       const matches = allPersonas().filter((p) => p.handle.toLowerCase().includes(clean) || p.name.toLowerCase().includes(clean)).slice(0, 40);
       const exact = allPersonas().some((p) => p.handle.toLowerCase() === clean);
       results.innerHTML = `<div class="dm-list">
-        ${matches.map((p) => `<button class="dm-row" data-user="${p.id}"><div class="avatar">${svgAvatar(p.id, p.aesthetic)}</div><div class="meta"><div class="name">${esc(p.name)}${p.verified ? ' <span class="vc">✓</span>' : ""}${p.imported ? ' <span class="pill-mini">imported</span>' : ""}</div><div class="preview">@${esc(p.handle)}</div></div></button>`).join("")}
+        ${matches.map((p) => `<button class="dm-row" data-user="${p.id}"><div class="avatar">${svgAvatar(p.id, p.aesthetic)}</div><div class="meta"><div class="name">${esc(p.name)}${p.verified ? ' <span class="vc">✓</span>' : ""}${p.imported ? ' <span class="pill-mini">imported</span>' : ""}</div><div class="preview">@${esc(p.handle)}${p.roleLabel ? " · " + esc(p.roleLabel) : ""}</div></div></button>`).join("")}
         ${exact ? "" : `<button class="dm-row import-row" data-import="${esc(clean)}"><div class="avatar import-plus">+</div><div class="meta"><div class="name">Import “@${esc(clean)}”</div><div class="preview">Generate an AI persona for this username</div></div></button>`}
       </div>`;
       results.querySelectorAll("[data-user]").forEach((el) => el.onclick = () => nav("user", el.dataset.user));
@@ -627,7 +660,13 @@
   }
   function synthPersona(handle) {
     const niche = guessNiche(handle);
-    return { name: nameFromHandle(handle), interest: niche.k, aesthetic: niche.aes, motif: niche.em[0], motifs: niche.em, bio: `${cap(niche.topic)} creator ${niche.em[0]} · imagined by AI`, voice: `a ${niche.topic} creator. friendly and casual, talks about ${niche.topic} and daily life with the occasional emoji.` };
+    const em = niche.em;
+    const bio = pick([
+      `${cap(niche.topic)} every day ${em[0]} · here for the ${niche.topic}`,
+      `${em[0]} all things ${niche.topic} · sharing the journey`,
+      `your daily ${niche.topic} fix ${em[0]} · dm to say hi`,
+    ], rng("bio" + handle));
+    return { name: nameFromHandle(handle), interest: niche.k, aesthetic: niche.aes, motif: em[0], motifs: em, bio, voice: `a ${niche.topic} creator. friendly and casual, talks about ${niche.topic} and everyday life with the occasional emoji.` };
   }
   async function importPersona(handleRaw) {
     const handle = handleRaw.replace(/[^a-z0-9._]/gi, "").toLowerCase();
@@ -637,17 +676,19 @@
     closeSearchKeyboard();
     toast("Importing @" + handle + "…");
     let data = synthPersona(handle);
+    let captions = null;
     if (realAvailable()) {
       try {
-        const sys = "You create short, fictional, respectful social-media personas for a parody app where everyone is an AI. Never include real private information or defamatory content. Keep it light and family-friendly.";
-        const usr = `Invent a fictional creator persona matching the vibe of the username "@${handle}". Respond with ONLY minified JSON: {"name":"display name","niche":"one lowercase word from: ${NICHES.map((n) => n.k).join(", ")}","bio":"<=80 chars playful bio","voice":"one sentence on how they talk","emojis":["x","y","z"]}`;
-        const raw = await callRaw(sys, [{ role: "user", content: usr }], 200);
+        const sys = "You create short, fictional, respectful social-media personas for a parody app where everyone is an AI. Never include real private information, real photos, or defamatory content about actual people. Invent a plausible fictional creator that fits the username's vibe. Keep it light and family-friendly.";
+        const usr = `Design a fictional creator whose vibe matches the username "@${handle}". Respond with ONLY minified JSON: {"name":"display name","niche":"one lowercase word from: ${NICHES.map((n) => n.k).join(", ")}","bio":"<=100 chars, says what they post","voice":"2 short sentences: their personality and how they talk","captions":["3 example post captions written in their voice"],"emojis":["x","y","z"]}`;
+        const raw = await callRaw(sys, [{ role: "user", content: usr }], 400);
         const m = raw.match(/\{[\s\S]*\}/);
         if (m) {
           const j = JSON.parse(m[0]);
           const niche = nicheByKey((j.niche || "").toLowerCase().trim()) || guessNiche(handle);
           const em = Array.isArray(j.emojis) && j.emojis.length ? j.emojis.slice(0, 5) : niche.em;
-          data = { name: (j.name || nameFromHandle(handle)).slice(0, 40), interest: niche.k, aesthetic: niche.aes, motif: em[0], motifs: em, bio: (j.bio || data.bio).slice(0, 90), voice: j.voice || data.voice };
+          data = { name: (j.name || nameFromHandle(handle)).slice(0, 40), interest: niche.k, aesthetic: niche.aes, motif: em[0], motifs: em, bio: (j.bio || data.bio).slice(0, 110), voice: j.voice || data.voice };
+          if (Array.isArray(j.captions)) captions = j.captions.filter((c) => typeof c === "string" && c.trim()).slice(0, 5);
         }
       } catch (e) { /* keep synth */ }
     }
@@ -655,8 +696,14 @@
     S.imported = (S.imported || []).filter((p) => p.id !== persona.id);
     S.imported.push(persona);
     if (!S.follows.includes(persona.id)) S.follows.push(persona.id);
-    // seed a couple of posts from them into the feed
-    for (let i = 0; i < 2; i++) { const post = makePersonaPost(persona); post.ts = now() - i * 3600000; S.posts.unshift(post); }
+    // seed a themed post history into the feed
+    for (let i = 0; i < 5; i++) {
+      const post = makePersonaPost(persona);
+      if (captions && captions[i]) post.caption = captions[i];
+      post.ts = now() - i * 3600000 * (2 + Math.random() * 4);
+      S.posts.unshift(post);
+    }
+    S.posts.sort((a, b) => b.ts - a.ts);
     save();
     toast("Imported @" + handle + " ✨");
     nav("user", persona.id);
@@ -670,7 +717,7 @@
     const withThreads = Object.keys(S.dms).filter((id) => (S.dms[id] || []).length).map(personaById).filter(Boolean);
     const list = [];
     const seen = new Set();
-    withThreads.concat(S.imported, FEATURED).forEach((p) => { if (p && !seen.has(p.id)) { seen.add(p.id); list.push(p); } });
+    withThreads.concat(S.imported, SHOWCASE).forEach((p) => { if (p && !seen.has(p.id)) { seen.add(p.id); list.push(p); } });
     const rows = list.map((p) => {
       const thread = S.dms[p.id] || [];
       const last = thread[thread.length - 1];
@@ -782,7 +829,7 @@
           </div>
         </div>
       </div>
-      <div class="profile-bio"><div class="name">${esc(name)}${!isMe && p.verified ? ' <span class="vc">✓</span>' : ""}</div>${esc(bio)}${!isMe && p.imported ? '<div class="hint" style="margin-top:6px">🤖 AI persona imagined from the handle — not affiliated with any real account.</div>' : ""}</div>
+      <div class="profile-bio"><div class="name">${esc(name)}${!isMe && p.verified ? ' <span class="vc">✓</span>' : ""}</div>${!isMe && p.roleLabel ? `<div class="role">${esc(p.roleLabel)}</div>` : ""}${esc(bio)}${!isMe && p.imported ? '<div class="hint" style="margin-top:6px">🤖 AI persona imagined from the handle — not affiliated with any real account.</div>' : ""}</div>
       ${actions}
       <div class="profile-tabs"><button class="active">▦ Posts</button></div>
       ${grid}
